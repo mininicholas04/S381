@@ -1,0 +1,31 @@
+<html>
+    <head>
+    </head>
+    <body>
+        <h1>Details of <%=inventory.name%></h1>
+        <br>
+        <img src="data:image/jpg;base64,<%=inventory.photo%>" alt="">
+        <br>
+        <p>Type: <%=inventory.type%></p>
+        <br>
+        <p>Quantity: <%=inventory.quantity%></p>
+        <br>
+        <p>Street: <%=inventory.street%></p>
+        <br>
+        <p>Building: <%=inventory.building%></p>
+        <br>
+        <p>Country: <%=inventory.country%></p>
+        <br>
+        <p>Zipcode: <%=inventory.zipcode%></p>
+        <br>
+        <p>GPS: [<%=inventory.latitude%>,<%=inventory.longitude%>]</p>
+        <br>
+        <p>Manager: </p>
+        <br>
+        <a href="/map?lat=<%=inventory.latitude%>&lon=<%=inventory.longitude%>">Map</a>
+        <br>
+        <a href="">Edit</a>
+        <a href="/delete?_id=<%=inventory._id%>">Delete</a>
+        <a href="/home">Back</a>
+    </body>
+</html>

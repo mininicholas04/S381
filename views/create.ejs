@@ -1,0 +1,40 @@
+<html>
+    <head>
+    </head>
+    <body>
+        <p>Create new inventory</p>
+        <form action="create" method="POST" enctype="multipart/form-data">
+            <label for="name">Name*:</label>
+            <input type="text" required name="name" placeholder="Name">
+            <br>
+            <label for="type">Type:</label>
+            <input type="text" name="type" placeholder="Type of inventory">
+            <br>
+            <label for="quantity">Quantity:</label>
+            <input type="number" name="quantity" placeholder="Quantity">
+            <br>
+            <label for="street">Street:</label>
+            <input type="text" name="street" placeholder="Street">
+            <br>
+            <label for="building">Building:</label>
+            <input type="text" name="building" placeholder="Building">
+            <br>
+            <label for="country">Country:</label>
+            <input type="text" name="country" placeholder="Zipcode">
+            <br>
+            <label for="zipcode">Zipcode:</label>
+            <input type="text" name="zipcode" placeholder="Zipcode">
+            <br>
+            <label for="latitude">GPS Latitude:</label>
+            <input type="text" name="latitude" placeholder="Latitude">
+            <br>
+            <label for="longitude">GPS Longitude:</label>
+            <input type="text" name="longitude" placeholder="Longitude">
+            <br>
+            <label for="photo">Photo:</label>
+            <input type="file" name="photo" placeholder="Please upload JPEG/PNG format">
+            <br>
+            <input type="submit" value="Create">
+        </form>
+    </body>
+</html>
