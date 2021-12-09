@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update inventory</title>
+    <title>Edit inventory</title>
 </head>
 
 <body>
-    <h1>Update Details of <%=inventory.name%></h1>
+    <h1>Edit Details of <%=inventory.name%></h1>
     <br>
     <img src="data:image/jpg;base64,<%=inventory.photo%>" alt="">
     <br>
@@ -44,6 +44,7 @@
         <label for="photo">Photo:</label>
         <input type="file" name="photo" placeholder="Please upload JPEG/PNG format">
         <br>
+        <input type="hidden" name="_id" value=<%=inventory._id%>>
         <input type="submit" value="Update">
         <br>
         <a href="/map?lat=<%=inventory.latitude%>&lon=<%=inventory.longitude%>">Map</a>

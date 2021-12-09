@@ -1,11 +1,11 @@
 const app = require('express')();
-const bp = require('body-parser');
+const bodyParser = require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
 const assert = require('assert');
 const fs = require('fs');
 const formidable = require('formidable');
-const mongourl = 'mongodb+srv://nicholas:Jasmine123@cluster0.qafzx.mongodb.net/test?retryWrites=true&w=majority';
+const mongourl = 'mongodb+srv://demo:demo123456@cluster0.uuudm.mongodb.net/test?retryWrites=true&w=majority';
 const dbName = 'test';
 const session = require('cookie-session');
 const { nextTick } = require('process');
@@ -13,17 +13,21 @@ const { render } = require('ejs');
 
 const SECRETKEY = 'KEY';
 const users = new Array(
-    { name: 'student' },
-    { name: 'demo' }
+    { name: 'student', password: '' },
+    { name: 'demo', password: '' }
 );
 
+//app.use(formidable());
+app.set('view engine', 'ejs');
 
-app.use(bp.urlencoded({ extended: true }))
-app.use(bp.json())
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 app.use(session({
     name: 'loginSession',
     keys: [SECRETKEY]
 }));
+
 const findDocument = (db, criteria, callback) => {
     let cursor = db.collection('inventory').find(criteria);
     cursor.toArray((err, docs) => {
@@ -96,19 +100,6 @@ const handle_Edit = (res, criteria) => {
             client.close();
             assert.equal(err, null);
             res.status(200).render('edit', { inventory: docs[0] });
-            /*
-            res.writeHead(200, {"content-type":"text/html"});
-            res.write('<html><body>');
-            res.write('<form action="/update" method="POST" enctype="multipart/form-data">');
-            res.write(`Booking ID: <input name="bookingid" value=${docs[0].bookingid}><br>`);
-            res.write(`Mobile: <input name="mobile" value=${docs[0].mobile} /><br>`);
-            // Q2
-            res.write('<input type="file" name="filetoupload"><br>');
-            //
-            res.write(`<input type="hidden" name="_id" value=${docs[0]._id}>`)
-            res.write(`<input type="submit" value="update">`);
-            res.end('</form></body></html>');
-            */
         });
     });
 }
@@ -130,61 +121,64 @@ const updateDocument = (criteria, updateDoc, callback) => {
         );
     });
 }
+
 const handle_Update = (req, res, criteria) => {
     // Q2
-    //const form = new formidable.IncomingForm(); 
-    //form.parse(req, (err, fields, files) => {
-    var DOCID = {};
-    DOCID['_id'] = ObjectID(req.fields._id);
-    var updateDoc = {};
-    updateDoc['name'] = req.fields.name;
-    updateDoc['type'] = req.fields.type;
-    updateDoc['quantity'] = req.fields.quantity;
-    updateDoc['street'] = req.fields.street;
-    updateDoc['building'] = req.fields.building;
-    updateDoc['country'] = req.fields.country;
-    updateDoc['zipcode'] = req.fields.zipcode;
-    updateDoc['latitude'] = req.fields.latitude;
-    updateDoc['longitude'] = req.fields.longitude;
-    if (req.files.filetoupload.size > 0) {
-        fs.readFile(req.files.filetoupload.path, (err, data) => {
-            assert.equal(err, null);
-            updateDoc['photo'] = new Buffer.from(data).toString('base64');
-            updateDocument(DOCID, updateDoc, (results) => {
-                /*res.status(200).render('info', {
-                    message: `Updated ${results.result.nModified} document(s)`
-                })*/
-                
-                res.writeHead(200, {"content-type":"text/html"});
-                res.write(`<html><body><p>Updated ${results.result.nModified} document(s)<p><br>`);
-                res.end('<a href="/">back</a></body></html>');
-                
+    const form = new formidable.IncomingForm();
+    form.parse(req, (err, fields, files) => {
+        var DOCID = {};
+        DOCID['_id'] = ObjectID(fields._id);
+        var updateDoc = {};
+        updateDoc['name'] = fields.name;
+        updateDoc['type'] = fields.type;
+        updateDoc['quantity'] = fields.quantity;
+        updateDoc['street'] = fields.street;
+        updateDoc['building'] = fields.building;
+        updateDoc['country'] = fields.country;
+        updateDoc['zipcode'] = fields.zipcode;
+        updateDoc['latitude'] = fields.latitude;
+        updateDoc['longitude'] = fields.longitude;
+        if (files.photo.size > 0) {
+            fs.readFile(files.photo.path, (err, data) => {
+                assert.equal(err, null);
+                updateDoc['photo'] = new Buffer.from(data).toString('base64');
+                updateDocument(DOCID, updateDoc, (results) => {
+                    res.status(200).render('info', {
+                        message: `Updated ${results.result.nModified} document(s)`
+                    })
+                });
             });
-        });
-    } else {
-        updateDocument(DOCID, updateDoc, (results) => {
-            /*
-            res.status(200).render('info', {
-                message: `Updated ${results.result.nModified} document(s)`
-            })
-            */
-            res.writeHead(200, {"content-type":"text/html"});
-            res.write(`<html><body><p>Updated ${results.result.nModified} document(s)<p><br>`);
-            res.end('<a href="/">back</a></body></html>');
-            
-        });
-    }
-    //})
+        } else {
+            updateDocument(DOCID, updateDoc, (results) => {
+                res.status(200).render('info', {
+                    message: `Updated ${results.result.nModified} document(s)`
+                })
+            });
+        }
+    })
     // end of Q2
 }
 
-app.set('view engine', 'ejs');
+
+app.use((req, res, next) => {
+    let d = new Date();
+    console.log(`TRACE: ${req.path} was requested at ${d.toLocaleDateString()}`);
+    next();
+})
+
 app.get('/', (req, res) => {
-    res.redirect('/login');
+    //console.log(req.session);
+    if (!req.session.authenticated) {    // user not logged in!
+        res.redirect('/login');
+    } else {
+        res.redirect('/home');
+    }
 });
+
 app.get('/login', (req, res) => {
-    res.render('login');
+    res.status(200).render('login', {});
 });
+
 app.get('/home', (req, res) => {
     const client = new MongoClient(mongourl);
     client.connect((err) => {
@@ -195,20 +189,27 @@ app.get('/home', (req, res) => {
         findDocument(db, {}, (docs) => {
             client.close();
             console.log("Closed DB connection");
-            res.render('home', { 'doc': docs });
+            res.render('home', { 'doc': docs, name: req.session.username });
         })
     });
 })
 
 app.post('/login', (req, res) => {
     users.forEach((user) => {
-        if (user.name == req.body.username) {
-            res.redirect('/home')
+        if (user.name == req.body.name && user.password == req.body.password) {
+            // correct user name + password
+            // store the following name/value pairs in cookie session
+            req.session.authenticated = true;        // 'authenticated': true
+            req.session.username = req.body.name;	 // 'username': req.body.name		
         }
     })
-    res.render("login");
+    res.redirect('/');
 });
 
+app.get('/logout', (req, res) => {
+    req.session = null;   // clear cookie-session
+    res.redirect('/');
+});
 
 app.get('/create', (req, res) => { res.render('create') })
 
@@ -272,6 +273,7 @@ app.get('/edit', (req, res) => {
 
 app.post('/update', (req, res) => {
     handle_Update(req, res, req.query);
+    console.log(req.query);
 })
 
 /* READ
