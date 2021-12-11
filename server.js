@@ -5,9 +5,12 @@ const ObjectID = require('mongodb').ObjectID;
 const assert = require('assert');
 const fs = require('fs');
 const formidable = require('formidable');
+
 const mongourl = 'mongodb+srv://demo:demo123456@cluster0.uuudm.mongodb.net/test?retryWrites=true&w=majority';
 const dbName = 'test';
+
 const session = require('cookie-session');
+
 const { nextTick } = require('process');
 const { render } = require('ejs');
 
@@ -28,15 +31,6 @@ app.use(session({
     keys: [SECRETKEY]
 }));
 
-const findDocument = (db, criteria, callback) => {
-    let cursor = db.collection('inventory').find(criteria);
-    cursor.toArray((err, docs) => {
-        assert.equal(err, null);
-        console.log(`findDocument: ${docs.length}`);
-        callback(docs);
-    });
-}
-
 const insertDocument = (db, doc, callback) => {
     db.collection('inventory').
         insertOne(doc, (err, results) => {
@@ -44,116 +38,6 @@ const insertDocument = (db, doc, callback) => {
             console.log(`Inserted`);
             callback(results);
         });
-}
-
-const deleteDocument = (db, doc, callback) => {
-    db.collection('inventory').
-        deleteOne(doc, (err, results) => {
-            assert.equal(err, null);
-            console.log(`Deleted`);
-            callback();
-        });
-}
-
-const HandleDetails = (res, criteria) => {
-    if (ObjectID.isValid(criteria._id) == false) {
-        res.status(200).render('denied', {
-            text: `_id is not valid`
-        })
-        return;
-    }
-    const client = new MongoClient(mongourl);
-    client.connect((err) => {
-        assert.equal(null, err);
-        console.log("Connected successfully to server");
-        const db = client.db(dbName);
-
-        let DOCID = {};
-        //console.log(criteria._id)
-        DOCID['_id'] = ObjectID(criteria._id)
-
-        findDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
-            client.close();
-            console.log("Closed DB connection");
-            //console.log(docs);
-            if (docs == "") {
-                res.status(200).render('denied', {
-                    text: `Empty query _id or document not found`
-                })
-                return;
-            }
-            res.status(200).render('details', { inventory: docs[0] });
-        });
-    });
-}
-
-const HandleDelete = (res, criteria) => {
-    if (ObjectID.isValid(criteria.query._id) == false) {
-        res.status(200).render('denied', {
-            text: `_id is not valid`
-        })
-        return;
-    }
-    const client = new MongoClient(mongourl);
-    client.connect((err) => {
-        assert.equal(null, err);
-        console.log("Connected successfully to server");
-        const db = client.db(dbName);
-        let DOCID = {};
-        DOCID['_id'] = ObjectID(criteria.query._id)
-        findDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
-            if (docs == "") {
-                res.status(200).render('denied', {
-                    text: `Empty query _id or document not found`
-                })
-                return;
-            }
-
-            if (docs[0].manager == criteria.session.username) {
-                deleteDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
-                    client.close();
-                    console.log("Closed DB connection");
-                    res.status(200).render('delete', { text: 'Document successfully deleted.' });
-                });
-            } else {
-                res.status(200).render('denied', {
-                    text: `Access denied - You don't have the access right!`
-                })
-            }
-        });
-    });
-}
-
-const HandleEdit = (res, criteria) => {
-    if (ObjectID.isValid(criteria._id) == false) {
-        res.status(200).render('denied', {
-            text: `_id is not valid`
-        })
-        return;
-    }
-    const client = new MongoClient(mongourl);
-    client.connect((err) => {
-        assert.equal(null, err);
-        console.log("Connected successfully to server");
-        const db = client.db(dbName);
-
-        /* use Document ID for query */
-        let DOCID = {};
-        DOCID['_id'] = ObjectID(criteria._id)
-        let cursor = db.collection('inventory').find(DOCID);
-        cursor.toArray((err, docs) => {
-            client.close();
-
-            if (docs == "") {
-                res.status(200).render('denied', {
-                    text: `Empty query _id or document not found`
-                })
-                return;
-            }
-            assert.equal(err, null);
-            res.status(200).render('edit', { inventory: docs[0] });
-        });
-    });
 }
 
 const updateDocument = (criteria, updateDoc, callback) => {
@@ -174,38 +58,159 @@ const updateDocument = (criteria, updateDoc, callback) => {
     });
 }
 
-const HandleUpdate = (req, res, criteria) => {
-    // Q2
-    if (ObjectID.isValid(fields._id) == false) {
-        res.status(200).render('denied', {
-            text: `_id is not valid`
+const findDocument = (db, criteria, callback) => {
+    let cursor = db.collection('inventory').find(criteria);
+    cursor.toArray((err, docs) => {
+        assert.equal(err, null);
+        console.log(`findDocument: ${docs.length}`);
+        callback(docs);
+    });
+}
+
+const deleteDocument = (db, doc, callback) => {
+    db.collection('inventory').
+        deleteOne(doc, (err, results) => {
+            assert.equal(err, null);
+            console.log(`Deleted`);
+            callback();
+        });
+}
+
+const HandleDetails = (res, criteria) => {
+    if (ObjectID.isValid(criteria._id) == false) {
+        res.status(200).render('info', {
+            message: `_id is not valid`
         })
         return;
     }
+    const client = new MongoClient(mongourl);
+    client.connect((err) => {
+        assert.equal(null, err);
+        console.log("Connected successfully to server");
+        const db = client.db(dbName);
+
+        let DOCID = {};
+        //console.log(criteria._id)
+        DOCID['_id'] = ObjectID(criteria._id)
+
+        findDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
+            client.close();
+            console.log("Closed DB connection");
+            //console.log(docs);
+            if (docs == "") {
+                res.status(200).render('info', {
+                    message: `Empty query _id or document not found`
+                })
+                return;
+            }
+            res.status(200).render('details', { inventory: docs[0] });
+        });
+    });
+}
+
+const HandleDelete = (res, criteria) => {
+    if (ObjectID.isValid(criteria.query._id) == false) {
+        res.status(200).render('info', {
+            message: `_id is not valid`
+        })
+        return;
+    }
+    const client = new MongoClient(mongourl);
+    client.connect((err) => {
+        assert.equal(null, err);
+        console.log("Connected successfully to server");
+        const db = client.db(dbName);
+        let DOCID = {};
+        DOCID['_id'] = ObjectID(criteria.query._id)
+        findDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
+            if (docs == "") {
+                res.status(200).render('info', {
+                    message: `Empty query _id or document not found`
+                })
+                return;
+            }
+
+            if (docs[0].manager == criteria.session.username) {
+                deleteDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
+                    client.close();
+                    console.log("Closed DB connection");
+                    res.status(200).render('info', { message: 'Document successfully deleted.' });
+                });
+            } else {
+                res.status(200).render('info', {
+                    message: `Access denied - You don't have the access right!`
+                })
+            }
+        });
+    });
+}
+
+const HandleEdit = (res, criteria) => {
+    if (ObjectID.isValid(criteria._id) == false) {
+        res.status(200).render('info', {
+            message: `_id is not valid`
+        })
+        return;
+    }
+    const client = new MongoClient(mongourl);
+    client.connect((err) => {
+        assert.equal(null, err);
+        console.log("Connected successfully to server");
+        const db = client.db(dbName);
+
+        /* use Document ID for query */
+        let DOCID = {};
+        DOCID['_id'] = ObjectID(criteria._id)
+        let cursor = db.collection('inventory').find(DOCID);
+        cursor.toArray((err, docs) => {
+            client.close();
+
+            if (docs == "") {
+                res.status(200).render('info', {
+                    message: `Empty query _id or document not found`
+                })
+                return;
+            }
+            assert.equal(err, null);
+            res.status(200).render('edit', { inventory: docs[0] });
+        });
+    });
+}
+
+const HandleUpdate = (req, res, criteria) => {
 
     const form = new formidable.IncomingForm();
     form.parse(req, (err, fields, files) => {
+
+        if (ObjectID.isValid(fields._id) == false) {
+            res.status(200).render('info', {
+                message: `_id is not valid`
+            })
+            return;
+        }
+
         const client = new MongoClient(mongourl);
         client.connect((err) => {
             assert.equal(null, err);
             console.log("Connected successfully to server");
             const db = client.db(dbName);
+
             let DOCID = {};
             DOCID['_id'] = ObjectID(fields._id);
             findDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
                 client.close();
 
                 if (docs == "") {
-                    res.status(200).render('denied', {
-                        text: `Empty query _id or document not found`
+                    res.status(200).render('info', {
+                        message: `Empty query _id or document not found`
                     })
                     return;
                 }
 
                 if (docs[0].manager == criteria.session.username) {
                     if (fields.name.trim() == "") {
-                        res.status(200).render('denied', {
-                            text: `Name must not be empty or space only`
+                        res.status(200).render('info', {
+                            message: `Name must not be empty or space only`
                         })
                     } else {
                         /*var DOCID = {};
@@ -241,16 +246,14 @@ const HandleUpdate = (req, res, criteria) => {
                     }
 
                 } else {
-                    res.status(200).render('denied', {
-                        text: `Invalid owner - Only the owner can update the page!`
+                    res.status(200).render('info', {
+                        message: `Invalid owner - Only the owner can update the page!`
                     })
                 }
             });
         });
-        // end of Q2
     })
 }
-
 
 app.use((req, res, next) => {
     let d = new Date();
@@ -320,8 +323,8 @@ app.post('/create', (req, res) => {
     form.parse(req, (err, fields, files) => {
         fs.readFile(files.photo.path, (err, data) => {
             if (fields.name.trim() == "") {
-                res.status(200).render('denied', {
-                    text: `Name must not be empty or space only`
+                res.status(200).render('info', {
+                    message: `Name must not be empty or space only`
                 })
             } else {
                 let DOC = {
@@ -347,7 +350,7 @@ app.post('/create', (req, res) => {
                     insertDocument(db, DOC, (results) => {
                         client.close();
                         console.log("Closed DB connection");
-                        res.render('insert', { text: `Document created` });
+                        res.render('info', { message: `Document created` });
                     })
                 })
             }
@@ -355,6 +358,7 @@ app.post('/create', (req, res) => {
     })
 
 })
+
 app.get('/detail', (req, res) => {
     if (!req.session.authenticated) {    // user not logged in!
         res.redirect('/login');
@@ -447,11 +451,6 @@ app.get('/api/inventory/type/:type', (req, res) => {
     } else {
         res.status(500).json({ "error": "missing type" });
     }
-})
-
-app.get('/*', (req, res) => {
-    //res.status(404).send(`${req.path} - Unknown request!`);
-    res.status(404).render('info', { message: `${req.path} - Unknown request!` });
 })
 
 app.get('/*', (req, res) => {
