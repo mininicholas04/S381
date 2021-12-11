@@ -56,7 +56,12 @@ const deleteDocument = (db, doc, callback) => {
 }
 
 const HandleDetails = (res, criteria) => {
-
+    if (ObjectID.isValid(criteria._id) == false) {
+        res.status(200).render('denied', {
+            text: `_id is not valid`
+        })
+        return;
+    }
     const client = new MongoClient(mongourl);
     client.connect((err) => {
         assert.equal(null, err);
@@ -64,16 +69,31 @@ const HandleDetails = (res, criteria) => {
         const db = client.db(dbName);
 
         let DOCID = {};
+        //console.log(criteria._id)
         DOCID['_id'] = ObjectID(criteria._id)
+
         findDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
             client.close();
             console.log("Closed DB connection");
+            //console.log(docs);
+            if (docs == "") {
+                res.status(200).render('denied', {
+                    text: `Empty query _id or document not found`
+                })
+                return;
+            }
             res.status(200).render('details', { inventory: docs[0] });
         });
     });
 }
 
 const HandleDelete = (res, criteria) => {
+    if (ObjectID.isValid(criteria.query._id) == false) {
+        res.status(200).render('denied', {
+            text: `_id is not valid`
+        })
+        return;
+    }
     const client = new MongoClient(mongourl);
     client.connect((err) => {
         assert.equal(null, err);
@@ -82,6 +102,13 @@ const HandleDelete = (res, criteria) => {
         let DOCID = {};
         DOCID['_id'] = ObjectID(criteria.query._id)
         findDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
+            if (docs == "") {
+                res.status(200).render('denied', {
+                    text: `Empty query _id or document not found`
+                })
+                return;
+            }
+
             if (docs[0].manager == criteria.session.username) {
                 deleteDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
                     client.close();
@@ -98,6 +125,12 @@ const HandleDelete = (res, criteria) => {
 }
 
 const HandleEdit = (res, criteria) => {
+    if (ObjectID.isValid(criteria._id) == false) {
+        res.status(200).render('denied', {
+            text: `_id is not valid`
+        })
+        return;
+    }
     const client = new MongoClient(mongourl);
     client.connect((err) => {
         assert.equal(null, err);
@@ -110,6 +143,13 @@ const HandleEdit = (res, criteria) => {
         let cursor = db.collection('inventory').find(DOCID);
         cursor.toArray((err, docs) => {
             client.close();
+
+            if (docs == "") {
+                res.status(200).render('denied', {
+                    text: `Empty query _id or document not found`
+                })
+                return;
+            }
             assert.equal(err, null);
             res.status(200).render('edit', { inventory: docs[0] });
         });
@@ -136,6 +176,13 @@ const updateDocument = (criteria, updateDoc, callback) => {
 
 const HandleUpdate = (req, res, criteria) => {
     // Q2
+    if (ObjectID.isValid(fields._id) == false) {
+        res.status(200).render('denied', {
+            text: `_id is not valid`
+        })
+        return;
+    }
+
     const form = new formidable.IncomingForm();
     form.parse(req, (err, fields, files) => {
         const client = new MongoClient(mongourl);
@@ -147,14 +194,22 @@ const HandleUpdate = (req, res, criteria) => {
             DOCID['_id'] = ObjectID(fields._id);
             findDocument(db, DOCID, (docs) => {  // docs contain 1 document (hopefully)
                 client.close();
+
+                if (docs == "") {
+                    res.status(200).render('denied', {
+                        text: `Empty query _id or document not found`
+                    })
+                    return;
+                }
+
                 if (docs[0].manager == criteria.session.username) {
                     if (fields.name.trim() == "") {
                         res.status(200).render('denied', {
                             text: `Name must not be empty or space only`
                         })
                     } else {
-                        var DOCID = {};
-                        DOCID['_id'] = ObjectID(fields._id);
+                        /*var DOCID = {};
+                        DOCID['_id'] = ObjectID(fields._id);*/
                         var updateDoc = {};
                         updateDoc['name'] = fields.name;
                         updateDoc['type'] = fields.type;
