@@ -1,26 +1,37 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <meta charset="utf-8">
+  <title>inventorys</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 </head>
-
 <body>
-    <H1>Hello, <%= name %></H1>
-    
-    <p><%=doc.length%></p>
-
-    <a href="/create">Create new inventory</a>
-    <a href="/logout">Log out</a>
-    <input type="text" id="myInput" onkeyup="myfunction()" placeholder="Search...">
+  <div class="container">
+    <div class="jumbotron text-center">
+      <div class="col-lg-12 text-center">
+        <h1>Hello! <%= name %></h1>
+        <p>There are <%= doc.length %> documents.</p>
+     	<p>s1212592 Harry</p>
+        <p>s1219976 Nicolas<p>
+        <p>s1224713 Ray Yu<p>
+      </div>
+    </div>
+    <div class="row ml-md-auto">
+        <a href="/create" class="btn btn-primary" role="button">Create new inventory</a>
+        <a href="/logout" class="btn btn-danger pull-right" role="button">Log out</a>
+    </div>
     <br>
-    <table id="myTable">
-        <thead>
-            <tr>
-                <th>inventory Name</th>
-            </tr>
-        </thead>
-        <tbody>
-            <%
+    <div class="row">
+                <p>Search inventory name:
+                <label for="bar"></label><input type="text" id="myInput" onkeyup="myfunction()" placeholder="Search..."><br></p>
+                <table id="myTable" class="table table-striped table-bordered table-hover table-scroll">
+                    <thead ><tr class="table-primary"><th>Inventory Name</th></tr></thead>
+                    <tbody style='height:300px;display:block;overflow:scroll'>
+                    <%
                 if(doc.length>0){
                 for(var x of doc){%>
             <tr>
@@ -33,7 +44,10 @@
             <p></p>
             <% } %>
 
-            <script>
+    </div>
+   </div>
+   
+   <script>
                 $(document).ready(function () {
                     $("#myInput").on("keyup", function () {
                         var value = $(this).val().toLowerCase();
@@ -44,5 +58,5 @@
                 });
             </script>
 </body>
-
 </html>
+
